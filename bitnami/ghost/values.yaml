@@ -96,16 +96,16 @@ allowEmptyPassword: true
 
 ## Use an existing secrets which already store your password data
 ##
-#existingSecret:
-  ## Name of the existing secret
-  ##
-  #name: mySecret
-  ## Key mapping where <key> is the value which the deployment is expecting and 
-  ## <value> is the name of the key in the existing secret.
-  ##
-  #keyMapping:
-  #  ghostPassword: myGhostPasswordKey
-  #  smtpPassword: mySmtpPasswordKey
+# existingSecret:
+#   ## Name of the existing secret
+#   ##
+#   name: mySecret
+#   ## Key mapping where <key> is the value which the deployment is expecting and 
+#   ## <value> is the name of the key in the existing secret.
+#   ##
+#   keyMapping:
+#     ghostPassword: myGhostPasswordKey
+#     smtpPassword: mySmtpPasswordKey
 
 ## Configure extra options for liveness and readiness probes
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
