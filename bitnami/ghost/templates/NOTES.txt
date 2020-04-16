@@ -18,10 +18,12 @@ host. To configure Ghost with the URL of your service:
         Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ template "ghost.fullname" . }}'
 
   export APP_HOST=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ template "ghost.fullname" . }} --template "{{ "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}" }}")
+
+  {{- end }}
+
   export APP_PASSWORD=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "ghost.fullname" . }} -o jsonpath="{.data.ghost-password}" | base64 --decode)
   {{- if .Values.mariadb.mariadbRootPassword }}
   export DATABASE_ROOT_PASSWORD=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "ghost.mariadb.fullname" . }} -o jsonpath="{.data.mariadb-root-password}" | base64 --decode)
-  {{- end }}
   {{- end }}
   export APP_DATABASE_PASSWORD=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "ghost.mariadb.fullname" . }} -o jsonpath="{.data.mariadb-password}" | base64 --decode)
 
@@ -47,8 +49,8 @@ host. To configure Ghost with the URL of your service:
 
 {{- else }}
 
-  echo Blog URL  : http://{{ include "ghost.host" . }}
-  echo Admin URL : http://{{ include "ghost.host" . }}ghost
+  echo Blog URL  : http://{{ include "ghost.endpoint" . }}
+  echo Admin URL : http://{{ include "ghost.endpoint" . }}ghost
 {{- end }}
 
 2. Get your Ghost login credentials by running:
@@ -57,9 +59,4 @@ host. To configure Ghost with the URL of your service:
   echo Password: $(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "ghost.fullname" . }} -o jsonpath="{.data.ghost-password}" | base64 --decode)
 {{- end }}
 
-{{- if and (contains "bitnami/" .Values.image.repository) (not (.Values.image.tag | toString | regexFind "-r\\d+$|sha256:")) }}
-
-WARNING: Rolling tag detected ({{ .Values.image.repository }}:{{ .Values.image.tag }}), please note that it is strongly recommended to avoid using rolling tags in a production environment.
-+info https://docs.bitnami.com/containers/how-to/understand-rolling-tags-containers/
-
-{{- end }}
+{{ include "common.warnings.rollingTag" .Values.image }}

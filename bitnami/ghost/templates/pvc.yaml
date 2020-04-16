@@ -2,7 +2,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ template "ghost.fullname" . }}
+  name: {{ include "ghost.fullname" . }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   accessModes:
