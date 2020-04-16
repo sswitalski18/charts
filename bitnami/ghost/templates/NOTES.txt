@@ -1,3 +1,4 @@
+{{- $ghostPasswordKey := ( include "common.secrets.key" (dict "existingSecret" .Values.existingSecret "key" "ghostPassword") ) -}}
 {{- if empty (include "ghost.host" .) -}}
 ###############################################################################
 ### ERROR: You did not provide an external host in your 'helm install' call ###
@@ -21,7 +22,7 @@ host. To configure Ghost with the URL of your service:
 
   {{- end }}
 
-  export APP_PASSWORD=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "ghost.fullname" . }} -o jsonpath="{.data.ghost-password}" | base64 --decode)
+  export APP_PASSWORD=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "ghost.fullname" . }} -o jsonpath="{.data.{{- $ghostPasswordKey -}}}" | base64 --decode)
   {{- if .Values.mariadb.mariadbRootPassword }}
   export DATABASE_ROOT_PASSWORD=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "ghost.mariadb.fullname" . }} -o jsonpath="{.data.mariadb-root-password}" | base64 --decode)
   {{- end }}
@@ -56,7 +57,7 @@ host. To configure Ghost with the URL of your service:
 2. Get your Ghost login credentials by running:
 
   echo Email:    {{ .Values.ghostEmail }}
-  echo Password: $(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "ghost.fullname" . }} -o jsonpath="{.data.ghost-password}" | base64 --decode)
+  echo Password: $(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "ghost.fullname" . }} -o jsonpath="{.data.{{- $ghostPasswordKey -}}}" | base64 --decode)
 {{- end }}
 
 {{ include "common.warnings.rollingTag" .Values.image }}
