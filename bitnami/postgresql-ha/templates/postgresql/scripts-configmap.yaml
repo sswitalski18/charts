@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-scripts" (include "postgresql-ha.postgresql" .) }}
+  labels: {{- include "postgresql-ha.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+data:
+  pre-stop.sh: |-
+    #!/bin/bash
+
+    set -o errexit
+    set -o pipefail
+    set -o nounset
+
+    # Debug section
+    exec 3>&1
+    exec 4>&2
+
+    if [ "${BITNAMI_DEBUG}" = true ]; then
+      echo "==> Bash debug is on"
+    else
+      echo "==> Bash debug is off"
+      exec 1>/dev/null
+      exec 2>/dev/null
+    fi
+
+    # Load Libraries
+    . /opt/bitnami/scripts/libpostgresql.sh
+    . /opt/bitnami/scripts/librepmgr.sh
+
+    # Load PostgreSQL & repmgr environment variables
+    eval "$(repmgr_env)"
+    eval "$(postgresql_env)"
+
+    postgresql_enable_nss_wrapper
+
+    # Prepare env vars for managing roles
+    eval "$(repmgr_set_role)"
+
+    # Stop postgresql for graceful exit.
+    postgresql_stop
+
+    if [[ "$REPMGR_CURRENT_PRIMARY_HOST" == "$REPMGR_NODE_NETWORK_NAME" ]]; then
+      echo "Primary node need to wait for a new primary node before leaving the cluster"
+
+      wait="1"
+      while [ "$wait" -eq "1" ]
+      do
+        eval "$(repmgr_set_role)"
+
+        echo "$REPMGR_CURRENT_PRIMARY_HOST == $REPMGR_NODE_NETWORK_NAME"
+        if [[ "$REPMGR_CURRENT_PRIMARY_HOST" != "$REPMGR_NODE_NETWORK_NAME" ]]; then
+          echo "New primary detected"
+          wait=0
+        fi
+
+        echo "I'm still primary node, waiting for a new primary"
+        sleep 2s
+      done
+      echo "Leaving the cluster"
+    else
+      echo "Standby node doesn't need to wait, leaving the cluster."
+    fi
